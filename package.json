@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/bleung9/tiny_app#readme",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
     "express": "^4.16.4"
   }
