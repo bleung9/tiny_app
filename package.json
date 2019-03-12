@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/bleung9/tiny_app/issues"
   },
-  "homepage": "https://github.com/bleung9/tiny_app#readme"
+  "homepage": "https://github.com/bleung9/tiny_app#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
 }
