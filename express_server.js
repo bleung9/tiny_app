@@ -41,7 +41,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-//upon receiving a new submission or update on urls_new or urls/:shortURL,
+//upon receiving a new submission on urls_new,
 //store that new URL in a database w/ an alphanumeric ID
 //redirect to `/urls/${short}`, which routes to app.get("/urls/:shortURL")
 app.post("/urls", (req, res) => {
@@ -49,6 +49,14 @@ app.post("/urls", (req, res) => {
   let short = generateRandomString();
   urlDatabase[short] = req.body.longURL;
   res.redirect(`/urls/${short}`);
+});
+
+//upon receiving a updated submission on urls_show,
+//store that new URL in a database w/ an alphanumeric ID
+//redirect to `/urls/${short}`, which routes to app.get("/urls/:shortURL")
+app.post("/urls/:shortURL", (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  res.redirect(`/urls/${req.params.shortURL}`);
 });
 
 // POST route to remove a resource at "/urls/:shortURL/delete and redirect to /urls (app.get("/urls")"
