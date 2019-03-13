@@ -15,6 +15,7 @@ function generateRandomString() {
   for (i = 0; i < 6; i++) {
     str += chars[Math.floor(Math.random() * 72)];
   }
+  return str;
 }
 
 const bodyParser = require("body-parser");
@@ -32,6 +33,8 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  let short = generateRandomString();
+  urlDatabase[short] = req.body.longURL;
 });
 
 app.get("/urls", (req, res) => {
