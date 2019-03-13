@@ -15,6 +15,7 @@
     <% for (address in urls) { %>
       <li><%= urls[address]%></li>
       <a href=#>a link for shortening URL's</a>
+      <form method="POST" action="/urls/<%= address %>/delete"><button type="submit">DELETE ME T_T</button></form>
     <% } %>
       <!-- Add EJS code here -->
   </ul>
