@@ -41,7 +41,8 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-//upon receiving a submission on urls_new, store that new URL in a database w/ an alphanumeric ID
+//upon receiving a new submission or update on urls_new or urls/:shortURL,
+//store that new URL in a database w/ an alphanumeric ID
 //redirect to `/urls/${short}`, which routes to app.get("/urls/:shortURL")
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
