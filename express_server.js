@@ -20,7 +20,7 @@ function generateRandomString() {
 
 //require the body library to parse the body into a string (req.body)
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({extended: true}))
 
 //when URL is /urls/new, render the stuff on urls_new.ejs.  urls_new is a form which
 //allows entry of new URL's.  upon submitting, it'll route to app.post("/urls")
