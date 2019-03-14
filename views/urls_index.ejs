@@ -22,9 +22,11 @@
 <body style="font-size:20px; padding:50px">
   <ul>
     <% for (address in urls) { %>
-      <li><b><%= address %></b>: <%= urls[address]%></li>
-      <a href="/urls/<%= address %>">EDIT</a>
-      <form method="POST" action="/urls/<%= address %>/delete"><button type="submit">DELETE ME T_T</button></form>
+      <% if (urls[address].userID === username.id) { %>
+        <li><b><%= address %></b>: <%= urls[address].longURL %> owned by <%= urls[address].userID %></li>
+        <a href="/urls/<%= address %>">EDIT</a>
+        <form method="POST" action="/urls/<%= address %>/delete"><button type="submit">DELETE ME T_T</button></form>
+      <% } %>
     <% } %>
       <!-- Add EJS code here -->
   </ul>
