@@ -26,6 +26,11 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
+  },
+  "user3RandomID": {
+    id: "user3RandomID",
+    email: "user3@example.com",
+    password: "funk"
   }
 }
 
@@ -38,13 +43,23 @@ function generateRandomString() {
   return str;
 }
 
+//return the ID of a user if email has been registered already, true if it hasn't
+function emailLookup(email) {
+  for (user in users) {
+    if (users[user].email === email) {
+      return user;
+    }
+  }
+  return true;
+}
+
 //when URL is /urls/new, render the stuff on urls_new.ejs.  urls_new is a form which
 //allows entry of new URL's.  upon submitting, it'll route to app.post("/urls")
 //this must come before app.get("/urls/:shortURL") b/c urls/new is a subset of that!!!!!!
 app.get("/urls/new", (req, res) => {
   let templateVars = { };
   if (!templateVars.username) {
-    templateVars.username = req.cookies["username"];
+    templateVars.username = users[req.cookies.user_id];
   }
   res.render("urls_new", templateVars);
 });
@@ -56,7 +71,7 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL: urlDatabase[req.params.shortURL]
   };
   if (!templateVars.username) {
-    templateVars.username = req.cookies["username"];
+    templateVars.username = users[req.cookies.user_id];
   }
   res.render("urls_show", templateVars);
 });
@@ -67,35 +82,42 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-//take a username from the login form, and set it to res.cookie
+//check for valid login, if valid, then log the user in and set cookie to their ID
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
+  let validLogin = emailLookup(req.body.email);
+  if (validLogin === true) {
+    res.status(403).send("EMAIL HASN'T BEEN REGISTERED!");
+  }
+  else if (users[validLogin].password !== req.body.password) {
+    res.status(403).send("WRONG PASSWORD");
+  }
+  else {
+    res.cookie("user_id", users[validLogin].id);
+    res.redirect("/urls");
+  }
 });
 
 //take a username from the logout form, and set it to res.cookie
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
 app.get("/register", (req, res) => {
   let templateVars = { };
   if (!templateVars.username) {
-    templateVars.username = req.cookies["username"];
+    templateVars.username = users[req.cookies.user_id];
   }
-  res.render("urls_email", templateVars);
+  console.log(req.cookies);
+  console.log(templateVars);
+  console.log(users);
+  res.render("urls_register", templateVars);
 });
 
-//return false if email has been registered already, true if it hasn't
-function emailLookup(email) {
-  for (user in users) {
-    if (users[user].email === email) {
-      return false;
-    }
-  }
-  return true;
-}
+app.get("/login", (req, res) => {
+  let templateVars = { username: ""};
+  res.render("urls_login", templateVars);
+})
 
 //takes in data from registration form and if the email and password are valid (don't exist, non-empty fields)
 //it stores that data in the users object (database), and sets the cookies to the registration parameters
@@ -104,13 +126,14 @@ app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
     res.status(400).send("EITHER EMAIL OR PASSWORD IS EMPTY, TRY AGAIN PLEASE!");
   }
-  if (emailLookup(req.body.email)) {
+  if (emailLookup(req.body.email) === true) {
     let newId = generateRandomString();
     users[newId] = {
       id: newId,
       email: req.body.email,
       password: req.body.password
     }
+    console.log(users);
     res.cookie("user_id", newId);
     res.redirect("/urls");
   }
@@ -146,12 +169,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //when URL is /urls, load the urls_index page w/ list of URL's in the database
 app.get("/urls", (req, res) => {
-  let templateVars = {
-    username: req.cookies["username"],
-    urls:urlDatabase
-  };
+  console.log(req.cookies);
+  let templateVars = { urls:urlDatabase };
+  if (!templateVars.username) {
+    templateVars.username = users[req.cookies.user_id];
+  }
+  console.log(templateVars);
   res.render("urls_index", templateVars);
-})
+});
 
 app.get("/", (req, res) => {
   res.send("Hello!");
