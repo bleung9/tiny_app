@@ -66,6 +66,18 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
+app.get("/register", (req, res) => {
+  let templateVars = { };
+  if (!templateVars.username) {
+    templateVars.username = req.cookies["username"];
+  }
+  res.render("urls_email", templateVars);
+});
+
+
+app.post("/register", (req, res) => {
+
+});
 
 //upon receiving a new submission on urls_new,
 //store that new URL in a database w/ an alphanumeric ID
