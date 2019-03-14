@@ -59,6 +59,17 @@ function emailLookup(email) {
   return true;
 }
 
+function urlsForUser(id) {
+  let urlArray = [];
+  for (urlId in urlDatabase) {
+    if (id == urlDatabase[urlId].userID) {
+      urlArray.push(urlDatabase[urlId].longURL);
+    }
+  }
+  return urlArray;
+}
+
+
 //when URL is /urls/new, render the stuff on urls_new.ejs.  urls_new is a form which
 //allows entry of new URL's.  upon submitting, it'll route to app.post("/urls")
 //this must come before app.get("/urls/:shortURL") b/c urls/new is a subset of that!!!!!!
