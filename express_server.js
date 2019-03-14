@@ -16,6 +16,19 @@ var urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+}
+
 function generateRandomString() {
   let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789";
   let str = "";
@@ -74,9 +87,36 @@ app.get("/register", (req, res) => {
   res.render("urls_email", templateVars);
 });
 
+//return false if email has been registered already, true if it hasn't
+function emailLookup(email) {
+  for (user in users) {
+    if (users[user].email === email) {
+      return false;
+    }
+  }
+  return true;
+}
 
+//takes in data from registration form and if the email and password are valid (don't exist, non-empty fields)
+//it stores that data in the users object (database), and sets the cookies to the registration parameters
 app.post("/register", (req, res) => {
-
+  console.log(req.body);  // Log the POST request body to the console
+  if (!req.body.email || !req.body.password) {
+    res.status(400).send("EITHER EMAIL OR PASSWORD IS EMPTY, TRY AGAIN PLEASE!");
+  }
+  if (emailLookup(req.body.email)) {
+    let newId = generateRandomString();
+    users[newId] = {
+      id: newId,
+      email: req.body.email,
+      password: req.body.password
+    }
+    res.cookie("user_id", newId);
+    res.redirect("/urls");
+  }
+  else {
+    res.status(400).send("EMAIL HAS BEEN REGISTERED ALREADY!");
+  }
 });
 
 //upon receiving a new submission on urls_new,
