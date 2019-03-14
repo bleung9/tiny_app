@@ -75,7 +75,7 @@ function urlsForUser(id) {
 //this must come before app.get("/urls/:shortURL") b/c urls/new is a subset of that!!!!!!
 //if no one is logged in and you try to acccess /urls/new, it'll redirect you to login screen.
 app.get("/urls/new", (req, res) => {
-  if (req.cookies.user_id == undefined) {
+  if (!req.cookies.user_id) {
     res.redirect("/login");
   }
   else {
@@ -172,15 +172,24 @@ app.post("/urls", (req, res) => {
 //store that new URL in a database w/ an alphanumeric ID
 //redirect to `/urls/${short}`, which routes to app.get("/urls/:shortURL")
 app.post("/urls/:shortURL", (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.longURL;
-  res.redirect(`/urls/${req.params.shortURL}`);
+  if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.shortURL].userID) {
+    res.redirect("/login");
+  } else {
+    urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+    urlDatabase[req.params.shortURL].userID = req.cookies.user_id;
+    res.redirect(`/urls/${req.params.shortURL}`);
+  }
 });
 
 // POST route to remove a resource at "/urls/:shortURL/delete and redirect to /urls (app.get("/urls")"
 app.post("/urls/:shortURL/delete", (req, res) => {
-  let short = req.params.shortURL;
-  delete urlDatabase[short];
-  res.redirect("/urls");
+ if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.shortURL].userID) {
+    res.redirect("/login");
+  } else {
+    let short = req.params.shortURL;
+    delete urlDatabase[short];
+    res.redirect("/urls");
+  }
 });
 
 //when URL is /urls, load the urls_index page w/ list of URL's in the database
