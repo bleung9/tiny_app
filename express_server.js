@@ -18,7 +18,8 @@ app.set("view engine", "ejs");
 
 const urlDatabase = {
   b2xVn2: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  a61azw: { longURL: "https://www.google.ca", userID: "aJ48lW" }
+  a61azw: { longURL: "https://www.google.ca", userID: "aJ48l"},
+  j1870c: { longURL: "https://www.reddit.com", userID: "aJ48lW"}
 };
 
 const users = {
@@ -61,6 +62,7 @@ function emailLookup(email) {
 //when URL is /urls/new, render the stuff on urls_new.ejs.  urls_new is a form which
 //allows entry of new URL's.  upon submitting, it'll route to app.post("/urls")
 //this must come before app.get("/urls/:shortURL") b/c urls/new is a subset of that!!!!!!
+//if no one is logged in and you try to acccess /urls/new, it'll redirect you to login screen.
 app.get("/urls/new", (req, res) => {
   if (req.cookies.user_id == undefined) {
     res.redirect("/login");
@@ -177,7 +179,7 @@ app.get("/urls", (req, res) => {
                        username: users[req.cookies.user_id]
                      };
   // console.log(templateVars);
-  console.log(users[req.cookies.user_id]);
+  console.log(templateVars.username);
   res.render("urls_index", templateVars);
 });
 
