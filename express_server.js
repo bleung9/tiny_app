@@ -1,5 +1,6 @@
 var express = require("express");
 var cookieSession = require('cookie-session');
+const bcrypt = require('bcrypt');
 var app = express();
 var PORT = 8080; // default port 8080
 
@@ -7,7 +8,7 @@ var PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}))
 
-// app.use(cookieParser());
+//app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
   keys: ["I", "have", "no", "idea", "what", "the", "hell", "is", "happening", "lulz"],
@@ -15,10 +16,6 @@ app.use(cookieSession({
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
-
-
-const bcrypt = require('bcrypt');
-
 
 app.set("view engine", "ejs");
 
@@ -64,12 +61,16 @@ function generateRandomString() {
 function emailLookup(email) {
   for (user in users) {
     if (users[user].email === email) {
+      // console.log(user);
+      // console.log(users[user].email);
+      // console.log(email);
       return user;
     }
   }
   return true;
 }
 
+//this returns a list of long URL's in the database for a particular user ID
 function urlsForUser(id) {
   let urlArray = [];
   for (urlId in urlDatabase) {
@@ -79,7 +80,6 @@ function urlsForUser(id) {
   }
   return urlArray;
 }
-
 
 //when URL is /urls/new, render the stuff on urls_new.ejs.  urls_new is a form which
 //allows entry of new URL's.  upon submitting, it'll route to app.post("/urls")
@@ -95,7 +95,7 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-///when URL is urls/:shortURL, render the urls_show.ejs file
+///when entered or redirected URL is urls/:shortURL, render the urls_show.ejs file
 app.get("/urls/:shortURL", (req, res) => {
   console.log(urlDatabase[req.params.shortURL]);
   let templateVars = {
@@ -112,7 +112,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-//check for valid login, if valid, then log the user in and set cookie to their ID
+//check for valid login.  if valid, log the user in and set cookie to their ID
 app.post("/login", (req, res) => {
   let validLogin = emailLookup(req.body.email);
   if (validLogin === true) {
@@ -127,12 +127,13 @@ app.post("/login", (req, res) => {
   }
 });
 
-//take a username from the logout form, and set it to res.cookie
+//logout a user by clearing response cookies, and redirecting back to /urls
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 });
 
+//render the register page
 app.get("/register", (req, res) => {
   let templateVars = { username: users[req.session.user_id] };
   // console.log(req.session);
@@ -141,20 +142,22 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
+//render the login page
 app.get("/login", (req, res) => {
-  let templateVars = { username: "" };
+  let templateVars = { username: users[req.session.user_id] };
   res.render("urls_login", templateVars);
 })
 
-//takes in data from registration form and if the email and password are valid (don't exist, non-empty fields)
-//it stores that data in the users object (database), and sets the cookies to the registration parameters
+//takes in data from registration form and if the email and password are valid (e.g. they exist, non-empty fields),
+//it stores that data in the users object (database), and sets the cookies to the registration parameters (auto-login)
+//passwords are encrypted in the database, and the session cookie is hashed
 app.post("/register", (req, res) => {
   // console.log(req.body);  // Log the POST request body to the console
   // console.log(req);  // Log the POST request body to the console
   if (!req.body.email || !req.body.password) {
     res.status(400).send("EITHER EMAIL OR PASSWORD IS EMPTY, TRY AGAIN PLEASE!");
   }
-  if (emailLookup(req.body.email) === true) {
+  else if (emailLookup(req.body.email) === true) {
     const hashed = bcrypt.hashSync(req.body.password, 10);
     let newId = generateRandomString();
     users[newId] = {
@@ -176,12 +179,12 @@ app.post("/register", (req, res) => {
 app.post("/urls", (req, res) => {
   // console.log(req.body);  // Log the POST request body to the console
   let short = generateRandomString();
-  urlDatabase[short].longURL = req.body.longURL;
+  urlDatabase[short] = { longURL: req.body.longURL, [userID]: req.session.user_id };
   res.redirect(`/urls/${short}`);
 });
 
 //upon receiving a updated submission on urls_show,
-//store that new URL in a database w/ an alphanumeric ID
+//store that new URL in a database w/ the original alphanumeric ID (old ID --> new longURL)
 //redirect to `/urls/${short}`, which routes to app.get("/urls/:shortURL")
 app.post("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
@@ -194,6 +197,8 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 // POST route to remove a resource at "/urls/:shortURL/delete and redirect to /urls (app.get("/urls")"
+//only allowed a logged in user, or the user to which that short URL "belongs" to, to modify or delete
+//any URL in the database.  if invalid user/not logged in, redirect to /login page.
 app.post("/urls/:shortURL/delete", (req, res) => {
  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
     res.redirect("/login");
@@ -204,7 +209,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
-//when URL is /urls, load the urls_index page w/ list of URL's in the database
+//when URL is /urls, load the urls_index page w/ list of URL's in the database belonging to a particular
+//logged in user (conditional statement is in urls_index.ejs)
 app.get("/urls", (req, res) => {
   // console.log(req.session);
   let templateVars = { urls: urlDatabase,
@@ -212,9 +218,11 @@ app.get("/urls", (req, res) => {
                      };
   // console.log(templateVars);
   console.log(templateVars.username);
+  console.log(templateVars.urls);
   res.render("urls_index", templateVars);
 });
 
+//display Hello on "/"
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
