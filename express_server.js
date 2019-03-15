@@ -1,5 +1,5 @@
 var express = require("express");
-var cookieParser = require('cookie-parser');
+var cookieSession = require('cookie-session');
 var app = express();
 var PORT = 8080; // default port 8080
 
@@ -7,7 +7,15 @@ var PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}))
 
-app.use(cookieParser());
+// app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ["I", "have", "no", "idea", "what", "the", "hell", "is", "happening", "lulz"],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
 
 const bcrypt = require('bcrypt');
 
@@ -78,11 +86,11 @@ function urlsForUser(id) {
 //this must come before app.get("/urls/:shortURL") b/c urls/new is a subset of that!!!!!!
 //if no one is logged in and you try to acccess /urls/new, it'll redirect you to login screen.
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.redirect("/login");
   }
   else {
-    let templateVars = { username: users[req.cookies.user_id] };
+    let templateVars = { username: users[req.session.user_id] };
     res.render("urls_new", templateVars);
   }
 });
@@ -93,7 +101,7 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    username: users[req.cookies.user_id]
+    username: users[req.session.user_id]
   };
   res.render("urls_show", templateVars);
 });
@@ -114,7 +122,7 @@ app.post("/login", (req, res) => {
     res.status(403).send("WRONG PASSWORD");
   }
   else {
-    res.cookie("user_id", users[validLogin].id);
+    req.session.user_id = users[validLogin].id;
     res.redirect("/urls");
   }
 });
@@ -126,8 +134,8 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  let templateVars = { username: users[req.cookies.user_id] };
-  // console.log(req.cookies);
+  let templateVars = { username: users[req.session.user_id] };
+  // console.log(req.session);
   // console.log(templateVars);
   // console.log(users);
   res.render("urls_register", templateVars);
@@ -154,7 +162,7 @@ app.post("/register", (req, res) => {
       email: req.body.email,
       password: hashed
     }
-    res.cookie("user_id", newId);
+    req.session.user_id = newId;
     res.redirect("/urls");
   }
   else {
@@ -176,18 +184,18 @@ app.post("/urls", (req, res) => {
 //store that new URL in a database w/ an alphanumeric ID
 //redirect to `/urls/${short}`, which routes to app.get("/urls/:shortURL")
 app.post("/urls/:shortURL", (req, res) => {
-  if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.shortURL].userID) {
+  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
     res.redirect("/login");
   } else {
     urlDatabase[req.params.shortURL].longURL = req.body.longURL;
-    urlDatabase[req.params.shortURL].userID = req.cookies.user_id;
+    urlDatabase[req.params.shortURL].userID = req.session.user_id;
     res.redirect(`/urls/${req.params.shortURL}`);
   }
 });
 
 // POST route to remove a resource at "/urls/:shortURL/delete and redirect to /urls (app.get("/urls")"
 app.post("/urls/:shortURL/delete", (req, res) => {
- if (!req.cookies.user_id || req.cookies.user_id !== urlDatabase[req.params.shortURL].userID) {
+ if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
     res.redirect("/login");
   } else {
     let short = req.params.shortURL;
@@ -198,9 +206,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //when URL is /urls, load the urls_index page w/ list of URL's in the database
 app.get("/urls", (req, res) => {
-  // console.log(req.cookies);
+  // console.log(req.session);
   let templateVars = { urls: urlDatabase,
-                       username: users[req.cookies.user_id]
+                       username: users[req.session.user_id]
                      };
   // console.log(templateVars);
   console.log(templateVars.username);
