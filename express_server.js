@@ -48,6 +48,7 @@ const users = {
  //  }
 }
 
+//generate a random string to be an ID for a new user registration
 function generateRandomString() {
   let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789";
   let str = "";
@@ -61,9 +62,6 @@ function generateRandomString() {
 function emailLookup(email) {
   for (user in users) {
     if (users[user].email === email) {
-      // console.log(user);
-      // console.log(users[user].email);
-      // console.log(email);
       return user;
     }
   }
@@ -97,7 +95,7 @@ app.get("/urls/new", (req, res) => {
 
 ///when entered or redirected URL is urls/:shortURL, render the urls_show.ejs file
 app.get("/urls/:shortURL", (req, res) => {
-  console.log(urlDatabase[req.params.shortURL]);
+  // console.log(urlDatabase[req.params.shortURL]);
   let templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
@@ -111,6 +109,21 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
+
+//when URL is /urls, load the urls_index page w/ list of URL's in the database belonging to a particular
+//logged in user (conditional statement is in urls_index.ejs)
+app.get("/urls", (req, res) => {
+  let templateVars = { urls: urlDatabase,
+                       username: users[req.session.user_id]
+                     };
+  res.render("urls_index", templateVars);
+});
+
+//render the login page
+app.get("/login", (req, res) => {
+  let templateVars = { username: users[req.session.user_id] };
+  res.render("urls_login", templateVars);
+})
 
 //check for valid login.  if valid, log the user in and set cookie to their ID
 app.post("/login", (req, res) => {
@@ -127,33 +140,16 @@ app.post("/login", (req, res) => {
   }
 });
 
-//logout a user by clearing response cookies, and redirecting back to /urls
-app.post("/logout", (req, res) => {
-  req.session = null;
-  res.redirect("/urls");
-});
-
 //render the register page
 app.get("/register", (req, res) => {
   let templateVars = { username: users[req.session.user_id] };
-  // console.log(req.session);
-  // console.log(templateVars);
-  // console.log(users);
   res.render("urls_register", templateVars);
 });
-
-//render the login page
-app.get("/login", (req, res) => {
-  let templateVars = { username: users[req.session.user_id] };
-  res.render("urls_login", templateVars);
-})
 
 //takes in data from registration form and if the email and password are valid (e.g. they exist, non-empty fields),
 //it stores that data in the users object (database), and sets the cookies to the registration parameters (auto-login)
 //passwords are encrypted in the database, and the session cookie is hashed
 app.post("/register", (req, res) => {
-  // console.log(req.body);  // Log the POST request body to the console
-  // console.log(req);  // Log the POST request body to the console
   if (!req.body.email || !req.body.password) {
     res.status(400).send("EITHER EMAIL OR PASSWORD IS EMPTY, TRY AGAIN PLEASE!");
   }
@@ -173,13 +169,18 @@ app.post("/register", (req, res) => {
   }
 });
 
+//logout a user by clearing response cookies, and redirecting back to /urls
+app.post("/logout", (req, res) => {
+  req.session = null;
+  res.redirect("/urls");
+});
+
 //upon receiving a new submission on urls_new,
 //store that new URL in a database w/ an alphanumeric ID
 //redirect to `/urls/${short}`, which routes to app.get("/urls/:shortURL")
 app.post("/urls", (req, res) => {
-  // console.log(req.body);  // Log the POST request body to the console
   let short = generateRandomString();
-  urlDatabase[short] = { longURL: req.body.longURL, [userID]: req.session.user_id };
+  urlDatabase[short] = { longURL: req.body.longURL, userID: req.session.user_id };
   res.redirect(`/urls/${short}`);
 });
 
@@ -207,19 +208,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     delete urlDatabase[short];
     res.redirect("/urls");
   }
-});
-
-//when URL is /urls, load the urls_index page w/ list of URL's in the database belonging to a particular
-//logged in user (conditional statement is in urls_index.ejs)
-app.get("/urls", (req, res) => {
-  // console.log(req.session);
-  let templateVars = { urls: urlDatabase,
-                       username: users[req.session.user_id]
-                     };
-  // console.log(templateVars);
-  console.log(templateVars.username);
-  console.log(templateVars.urls);
-  res.render("urls_index", templateVars);
 });
 
 //display Hello on "/"
