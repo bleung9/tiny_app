@@ -1,0 +1,54 @@
+Arguments: 
+  /home/vagrant/.nvm/versions/node/v8.9.4/bin/node /usr/share/yarn/bin/yarn.js add bcrypt@2.0.0
+
+PATH: 
+  /home/vagrant/bin:/home/vagrant/.local/bin:/home/vagrant/.nvm/versions/node/v8.9.4/bin:/home/vagrant/.rvm/gems/ruby-2.3.5/bin:/home/vagrant/.rvm/gems/ruby-2.3.5@global/bin:/home/vagrant/.rvm/rubies/ruby-2.3.5/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/home/vagrant/.rvm/bin:/home/vagrant/.rvm/bin
+
+Yarn version: 
+  1.13.0
+
+Node version: 
+  8.9.4
+
+Platform: 
+  linux x64
+
+Trace: 
+  Error: EPROTO: protocol error, symlink '../../../node-pre-gyp/bin/node-pre-gyp' -> '/vagrant/tiny-app/node_modules/bcrypt/node_modules/.bin/node-pre-gyp'
+
+npm manifest: 
+  {
+    "name": "tiny-app",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "start": "./node_modules/nodemon/bin/nodemon.js -L express_server.js",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/bleung9/tiny_app.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+      "url": "https://github.com/bleung9/tiny_app/issues"
+    },
+    "homepage": "https://github.com/bleung9/tiny_app#readme",
+    "dependencies": {
+      "body-parser": "^1.18.3",
+      "cookie-parser": "^1.4.4",
+      "ejs": "^2.6.1",
+      "express": "^4.16.4"
+    },
+    "devDependencies": {
+      "nodemon": "^1.18.10"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

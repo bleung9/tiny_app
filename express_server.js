@@ -9,6 +9,9 @@ app.use(bodyParser.urlencoded({extended: true}))
 
 app.use(cookieParser());
 
+const bcrypt = require('bcrypt');
+
+
 app.set("view engine", "ejs");
 
 // var urlDatabase = {
@@ -17,27 +20,27 @@ app.set("view engine", "ejs");
 // };
 
 const urlDatabase = {
-  b2xVn2: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  a61azw: { longURL: "https://www.google.ca", userID: "aJ48l"},
-  j1870c: { longURL: "https://www.reddit.com", userID: "aJ48lW"}
+  // b2xVn2: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  // a61azw: { longURL: "https://www.google.ca", userID: "aJ48l"},
+  // j1870c: { longURL: "https://www.reddit.com", userID: "aJ48lW"}
 };
 
 const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
- "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  },
-  "aJ48lW": {
-    id: "aJ48lW",
-    email: "user3@example.com",
-    password: "funk"
-  }
+ //  "userRandomID": {
+ //    id: "userRandomID",
+ //    email: "user@example.com",
+ //    password: "purple-monkey-dinosaur"
+ //  },
+ // "user2RandomID": {
+ //    id: "user2RandomID",
+ //    email: "user2@example.com",
+ //    password: "dishwasher-funk"
+ //  },
+ //  "aJ48lW": {
+ //    id: "aJ48lW",
+ //    email: "user3@example.com",
+ //    password: "funk"
+ //  }
 }
 
 function generateRandomString() {
@@ -107,7 +110,7 @@ app.post("/login", (req, res) => {
   if (validLogin === true) {
     res.status(403).send("EMAIL HASN'T BEEN REGISTERED!");
   }
-  else if (users[validLogin].password !== req.body.password) {
+  else if (!bcrypt.compareSync(req.body.password, users[validLogin].password)) {
     res.status(403).send("WRONG PASSWORD");
   }
   else {
@@ -144,11 +147,12 @@ app.post("/register", (req, res) => {
     res.status(400).send("EITHER EMAIL OR PASSWORD IS EMPTY, TRY AGAIN PLEASE!");
   }
   if (emailLookup(req.body.email) === true) {
+    const hashed = bcrypt.hashSync(req.body.password, 10);
     let newId = generateRandomString();
     users[newId] = {
       id: newId,
       email: req.body.email,
-      password: req.body.password
+      password: hashed
     }
     res.cookie("user_id", newId);
     res.redirect("/urls");
