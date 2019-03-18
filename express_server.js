@@ -79,6 +79,12 @@ function urlsForUser(id) {
   return urlArray;
 }
 
+//return true (an incorrect login) if shortURL has a different userID in the database
+//as the currently logged in user
+function incorrectLogin(cookie, shortURL) {
+  return cookie !== urlDatabase[shortURL].userID;
+}
+
 //when URL is /urls/new, render the stuff on urls_new.ejs.  urls_new is a form which
 //allows entry of new URL's.  upon submitting, it'll route to app.post("/urls")
 //this must come before app.get("/urls/:shortURL") b/c urls/new is a subset of that!!!!!!
@@ -95,13 +101,17 @@ app.get("/urls/new", (req, res) => {
 
 ///when entered or redirected URL is urls/:shortURL, render the urls_show.ejs file
 app.get("/urls/:shortURL", (req, res) => {
-  // console.log(urlDatabase[req.params.shortURL]);
-  let templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    username: users[req.session.user_id]
-  };
-  res.render("urls_show", templateVars);
+  if (!req.session.user_id || incorrectLogin(req.session.user_id, req.params.shortURL)) {
+    res.redirect("/login");
+  }
+  else {
+    let templateVars = {
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL,
+      username: users[req.session.user_id]
+    };
+    res.render("urls_show", templateVars);
+  }
 });
 
 // if user types /u/:shortURL, redirect to the longURL (for something that exists in database already)
@@ -188,7 +198,7 @@ app.post("/urls", (req, res) => {
 //store that new URL in a database w/ the original alphanumeric ID (old ID --> new longURL)
 //redirect to `/urls/${short}`, which routes to app.get("/urls/:shortURL")
 app.post("/urls/:shortURL", (req, res) => {
-  if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
+  if (!req.session.user_id || incorrectLogin(req.session.user_id, req.params.shortURL)) {
     res.redirect("/login");
   } else {
     urlDatabase[req.params.shortURL].longURL = req.body.longURL;
@@ -201,7 +211,7 @@ app.post("/urls/:shortURL", (req, res) => {
 //only allowed a logged in user, or the user to which that short URL "belongs" to, to modify or delete
 //any URL in the database.  if invalid user/not logged in, redirect to /login page.
 app.post("/urls/:shortURL/delete", (req, res) => {
- if (!req.session.user_id || req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
+  if (!req.session.user_id || incorrectLogin(req.session.user_id, req.params.shortURL)) {
     res.redirect("/login");
   } else {
     let short = req.params.shortURL;
@@ -210,9 +220,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
-//display Hello on "/"
+// "/" redirects to homepage if logged in, and login page if not
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  !req.session.user_id ? res.redirect("/login") : res.redirect("/urls");
 });
 
 //display the urlDatabase array of objects
